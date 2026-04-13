@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Polymarket Copy Bot</title>
+<style>
+:root{
+  --bg:#f8f7f4;--surface:#fff;--surface2:#f1efe8;--surface3:#e8e6df;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.16);
+  --text:#1a1a18;--text2:#5f5e5a;--text3:#888780;
+  --green:#3b6d11;--gbg:#eaf3de;--gmid:#639922;
+  --red:#a32d2d;--rbg:#fcebeb;--rmid:#e24b4a;
+  --blue:#185fa5;--bbg:#e6f1fb;
+  --teal:#0f6e56;--tmid:#1d9e75;--tbg:#e1f5ee;
+  --ambg:#faeeda;--am:#633806;
+  --pubg:#eeedfe;--pu:#534ab7;
+  --r:8px;--rl:12px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'Courier New',monospace;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1a1a18;--surface:#232320;--surface2:#2c2c2a;--surface3:#363633;
+  --border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.16);
+  --text:#f1efe8;--text2:#b4b2a9;--text3:#888780;
+  --green:#97c459;--gbg:#173404;--gmid:#639922;
+  --red:#f09595;--rbg:#501313;--rmid:#e24b4a;
+  --blue:#85b7eb;--bbg:#042c53;
+  --teal:#5dcaa5;--tmid:#1d9e75;--tbg:#04342c;
+  --ambg:#412402;--am:#fac775;
+  --pubg:#26215c;--pu:#afa9ec;
+}}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.6;min-height:100vh;}
+.shell{display:flex;height:100vh;overflow:hidden;}
+
+/* Sidebar */
+.sidebar{width:210px;background:var(--surface);border-right:0.5px solid var(--border);padding:0;display:flex;flex-direction:column;flex-shrink:0;}
+.logo{padding:18px 16px 14px;border-bottom:0.5px solid var(--border);}
+.logo-title{font-size:16px;font-weight:700;letter-spacing:-0.4px;}
+.logo-title span{color:var(--tmid);}
+.logo-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.nav-section{padding:10px 0 4px;}
+.nav-label-sm{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;padding:0 16px 4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;font-size:13px;color:var(--text2);cursor:pointer;transition:all 0.12s;border-left:2px solid transparent;user-select:none;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--surface2);color:var(--text);border-left-color:var(--tmid);font-weight:500;}
+.nav-icon{width:15px;height:15px;flex-shrink:0;opacity:0.55;}
+.nav-item.active .nav-icon,.nav-item:hover .nav-icon{opacity:1;}
+.sidebar-bottom{margin-top:auto;padding:14px 16px;border-top:0.5px solid var(--border);}
+.status-pill{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background 0.4s;}
+.dot.on{background:var(--gmid);box-shadow:0 0 0 3px rgba(99,153,34,0.2);}
+
+/* Main */
+.main{flex:1;overflow-y:auto;padding:28px 28px 48px;}
+.page{display:none;max-width:920px;margin:0 auto;}
+.page.active{display:block;}
+.page-title{font-size:19px;font-weight:600;margin-bottom:3px;letter-spacing:-0.3px;}
+.page-sub{font-size:13px;color:var(--text3);margin-bottom:22px;}
+
+/* Metrics */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:20px;}
+.metric{background:var(--surface2);border-radius:var(--r);padding:14px 16px;}
+.mlabel{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;}
+.mval{font-size:21px;font-weight:600;color:var(--text);line-height:1;}
+.mval.g{color:var(--green);}.mval.r{color:var(--red);}
+.mval.b{color:var(--blue);}.mval.t{color:var(--teal);}.mval.p{color:var(--pu);}
+.mval.sm{font-size:14px;font-weight:500;}
+
+/* Cards */
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--rl);padding:18px 20px;margin-bottom:14px;}
+.ctitle{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:14px;}
+.cheader{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+
+/* Trade mode toggle */
+.mode-toggle{display:flex;gap:0;background:var(--surface2);border-radius:var(--r);padding:3px;margin-bottom:16px;width:fit-content;}
+.mode-btn{padding:6px 18px;font-size:13px;border-radius:6px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-family:var(--font);transition:all 0.15s;}
+.mode-btn.active{background:var(--surface);color:var(--text);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,0.1);}
+
+/* Form */
+input[type=text],input[type=number],select{
+  background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--r);
+  color:var(--text);font-family:var(--font);font-size:13px;padding:8px 12px;
+  outline:none;transition:border-color 0.15s;
+}
+input[type=text]:focus,input[type=number]:focus,select:focus{border-color:var(--tmid);}
+input[type=text]{width:100%;}
+input[type=range]{width:100%;accent-color:var(--tmid);}
+.row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.row label{font-size:13px;color:var(--text2);min-width:180px;}
+.hint{font-size:11px;color:var(--text3);}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--tmid);cursor:pointer;}
+
+/* Buttons */
+.btn{padding:7px 16px;font-size:13px;border-radius:var(--r);border:0.5px solid var(--border2);background:transparent;color:var(--text);cursor:pointer;font-family:var(--font);transition:all 0.15s;white-space:nowrap;}
+.btn:hover{background:var(--surface2);}.btn:active{transform:scale(0.97);}
+.btn.primary{background:var(--tmid);border-color:var(--tmid);color:#fff;}
+.btn.primary:hover{background:var(--teal);}
+.btn.danger{background:var(--rmid);border-color:var(--rmid);color:#fff;}
+.btn.danger:hover{background:var(--red);}
+.btn.sm{padding:4px 10px;font-size:11px;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+
+.divider{height:0.5px;background:var(--border);margin:16px 0;}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
+th{text-align:left;padding:7px 10px;color:var(--text3);font-weight:500;border-bottom:0.5px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:0.05em;}
+td{padding:9px 10px;border-bottom:0.5px solid var(--border);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surface2);}
+.erow td{text-align:center;color:var(--text3);padding:28px;white-space:normal;}
+
+/* Badges */
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap;}
+.badge.buy,.badge.win{background:var(--gbg);color:var(--green);}
+.badge.sell,.badge.loss{background:var(--rbg);color:var(--red);}
+.badge.copied{background:var(--bbg);color:var(--blue);}
+.badge.skipped{background:var(--surface2);color:var(--text3);}
+.badge.yes{background:var(--tbg);color:var(--teal);}
+.badge.no{background:var(--ambg);color:var(--am);}
+.badge.trade{background:var(--pubg);color:var(--pu);}
+.badge.redeem{background:var(--gbg);color:var(--green);}
+.badge.merge,.badge.split{background:var(--surface2);color:var(--text2);}
+.badge.deposit{background:var(--tbg);color:var(--teal);}
+.badge.partial{background:var(--ambg);color:var(--am);}
+.pos{color:var(--green);font-weight:600;}.neg{color:var(--red);font-weight:600;}
+.pbar-wrap{height:3px;background:var(--surface2);border-radius:2px;margin-top:4px;}
+.pbar{height:3px;border-radius:2px;}
+
+/* Log */
+.log{font-size:12px;font-family:var(--mono);color:var(--text2);background:var(--surface2);border-radius:var(--r);padding:10px 14px;max-height:150px;overflow-y:auto;line-height:1.8;}
+.log-ok{color:var(--green);}.log-err{color:var(--red);}.log-info{color:var(--text3);}
+
+/* Chart */
+.chart{display:flex;gap:6px;align-items:flex-end;height:90px;padding-top:8px;}
+.bcol{display:flex;flex-direction:column;align-items:center;flex:1;gap:4px;}
+.bcol .bar{width:100%;border-radius:3px 3px 0 0;min-height:4px;}
+.bcol span{font-size:10px;color:var(--text3);}
+
+/* Activity */
+.act-item{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:0.5px solid var(--border);}
+.act-item:last-child{border-bottom:none;}
+.act-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.act-time{font-size:11px;color:var(--text3);min-width:70px;padding-top:2px;}
+.act-body{flex:1;min-width:0;}
+.act-title{font-size:13px;color:var(--text);line-height:1.5;}
+.act-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.act-amt{font-size:13px;font-weight:600;min-width:80px;text-align:right;padding-top:2px;flex-shrink:0;}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:14px;}
+
+/* Info box */
+.info-box{background:var(--bbg);border:0.5px solid rgba(24,95,165,0.2);border-radius:var(--r);padding:12px 14px;font-size:12px;color:var(--blue);margin-bottom:14px;line-height:1.6;}
+
+/* Confirm modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:var(--surface);border-radius:var(--rl);padding:24px;width:400px;max-width:92vw;border:0.5px solid var(--border2);}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:10px;}
+.modal-body{font-size:13px;color:var(--text2);margin-bottom:18px;line-height:1.7;}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;}
+.modal-detail{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
+.modal-detail-item{background:var(--surface2);border-radius:var(--r);padding:10px 12px;}
+.modal-detail-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;}
+.modal-detail-value{font-size:15px;font-weight:600;color:var(--text);}
+
+@media(max-width:640px){
+  .sidebar{width:52px;}
+  .logo-title,.logo-sub,.nav-item span,.nav-label-sm,.sidebar-bottom .status-pill span{display:none;}
+  .nav-item{padding:12px;justify-content:center;}
+  .main{padding:16px;}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-title">Poly<span>Bot</span></div>
+    <div class="logo-sub">Copy trading dashboard</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label-sm">Trading</div>
+    <div class="nav-item active" onclick="showPage('bot',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
+      <span>Bot control</span>
+    </div>
+    <div class="nav-item" onclick="showPage('activity',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,11 4,7 7,9 10,4 15,8"/></svg>
+      <span>Activity</span>
+    </div>
+    <div class="nav-item" onclick="showPage('trades',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h7M3 12h4"/><polyline points="11,9 14,12 11,15"/></svg>
+      <span>Trade history</span>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label-sm">Portfolio</div>
+    <div class="nav-item" onclick="showPage('positions',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="9" width="3" height="5" rx="1"/><rect x="6.5" y="6" width="3" height="8" rx="1"/><rect x="11" y="3" width="3" height="11" rx="1"/></svg>
+      <span>Positions</span>
+    </div>
+    <div class="nav-item" onclick="showPage('pnl',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 2 5-6"/><circle cx="14" cy="4" r="1.5"/></svg>
+      <span>P&amp;L</span>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label-sm">Config</div>
+    <div class="nav-item" onclick="showPage('settings',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
+      <span>Settings</span>
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="status-pill">
+      <div class="dot" id="sDot"></div>
+      <span id="sLabel">Bot stopped</span>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+<!-- ── BOT PAGE ── -->
+<div class="page active" id="page-bot">
+  <div class="page-title">Bot control</div>
+  <div class="page-sub">Configure, start, and monitor your copy trading bot</div>
+
+  <div class="metrics">
+    <div class="metric"><div class="mlabel">Copied</div><div class="mval t" id="mCopied">0</div></div>
+    <div class="metric"><div class="mlabel">Buys</div><div class="mval g" id="mBuys">0</div></div>
+    <div class="metric"><div class="mlabel">Sells</div><div class="mval r" id="mSells">0</div></div>
+    <div class="metric"><div class="mlabel">Skipped</div><div class="mval" id="mSkipped">0</div></div>
+    <div class="metric"><div class="mlabel">USDC spent</div><div class="mval b" id="mSpent">$0.00</div></div>
+    <div class="metric"><div class="mlabel">Daily left</div><div class="mval sm g" id="mDailyLeft">—</div></div>
+    <div class="metric"><div class="mlabel">Uptime</div><div class="mval sm" id="mUptime">—</div></div>
+  </div>
+
+  <!-- Wallet -->
+  <div class="card">
+    <div class="ctitle">Target wallet</div>
+    <div class="row">
+      <label>Wallet to copy</label>
+      <input type="text" id="walletInput" value="0xf7a19aad8bd78c2e5e50a0729f6342775a909dce" placeholder="0x..."/>
+    </div>
+    <div class="row">
+      <label>Copy BUY trades</label>
+      <input type="checkbox" id="doBuy" checked/>
+      <span class="hint">mirror their buy positions</span>
+    </div>
+    <div class="row">
+      <label>Copy SELL trades</label>
+      <input type="checkbox" id="doSell" checked/>
+      <span class="hint">mirror their exits</span>
+    </div>
+    <div class="row">
+      <label>Confirm before each trade</label>
+      <input type="checkbox" id="doConfirm" checked/>
+      <span class="hint">show popup before placing order</span>
+    </div>
+  </div>
+
+  <!-- Trade sizing -->
+  <div class="card">
+    <div class="ctitle">Trade sizing mode</div>
+
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="modeFixedBtn" onclick="setMode('fixed')">Fixed amount</button>
+      <button class="mode-btn" id="modePctBtn" onclick="setMode('percentage')">% of portfolio</button>
+      <button class="mode-btn" id="modeMirrorBtn" onclick="setMode('mirror')">Mirror exactly</button>
+    </div>
+
+    <!-- Fixed amount mode -->
+    <div id="modeFixed">
+      <div class="info-box">Spend a fixed USDC amount on every trade, regardless of what the target spends.</div>
+      <div class="row">
+        <label>USDC per trade ($)</label>
+        <input type="number" id="fixedAmt" value="5" min="1" max="10000" step="1" style="width:100px;"/>
+      </div>
+    </div>
+
+    <!-- Percentage mode -->
+    <div id="modePct" style="display:none;">
+      <div class="info-box">Spend a % of YOUR Polymarket balance on every trade. If you have $200 and set 5%, you spend $10 per trade.</div>
+      <div class="row">
+        <label>% of your balance per trade</label>
+        <input type="number" id="pctAmt" value="5" min="0.1" max="100" step="0.1" style="width:100px;"/>
+        <span class="hint">% of your USDC balance</span>
+      </div>
+      <div class="row">
+        <label>Your estimated balance ($)</label>
+        <input type="number" id="myBalance" value="100" min="1" step="1" style="width:100px;"/>
+        <span class="hint" id="pctPreview">= $5.00 per trade</span>
+      </div>
+    </div>
+
+    <!-- Mirror mode -->
+    <div id="modeMirror" style="display:none;">
+      <div class="info-box">Scale your trade proportionally to what the target spends. If they spend $1,000 and your scale is 0.1×, you spend $100.</div>
+      <div class="row">
+        <label>Scale factor</label>
+        <input type="number" id="scaleFactor" value="0.1" min="0.01" max="2" step="0.01" style="width:100px;"/>
+        <span class="hint" id="scalePreview">0.1× = 10% of their size</span>
+      </div>
+      <div class="row">
+        <label>Scale slider</label>
+        <input type="range" id="scaleSlider" min="1" max="200" value="10" step="1" style="width:160px;" oninput="syncScale(this.value)"/>
+        <span class="hint" id="sliderVal">10%</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="row">
+      <label>Min trade size ($)</label>
+      <input type="number" id="minTrade" value="2" min="0" max="100" step="1" style="width:100px;"/>
+      <span class="hint">never spend less than this</span>
+    </div>
+    <div class="row">
+      <label>Max trade size ($)</label>
+      <input type="number" id="maxTrade" value="100" min="1" max="10000" step="1" style="width:100px;"/>
+      <span class="hint">never spend more than this</span>
+    </div>
+    <div class="row">
+      <label>Daily spend limit ($)</label>
+      <input type="number" id="dailyLimit" value="200" min="0" step="10" style="width:100px;"/>
+      <span class="hint">bot stops when reached</span>
+    </div>
+  </div>
+
+  <!-- Start/stop -->
+  <div class="card">
+    <div class="ctitle">Bot controls</div>
+    <div class="btn-row">
+      <button class="btn primary" id="startBtn" onclick="startBot()">▶ Start bot</button>
+      <button class="btn danger" id="stopBtn" onclick="stopBot()" style="display:none;">■ Stop bot</button>
+      <button class="btn" onclick="resetStats()">Reset stats</button>
+    </div>
+  </div>
+
+  <!-- Live trades -->
+  <div class="card">
+    <div class="cheader">
+      <span class="ctitle">Live detected trades</span>
+      <button class="btn sm" onclick="clearDetected()">Clear</button>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th style="width:68px;">Time</th>
+        <th style="width:30%;">Market</th>
+        <th style="width:48px;">Side</th>
+        <th style="width:52px;">Outcome</th>
+        <th style="width:48px;">Price</th>
+        <th style="width:62px;">Mode</th>
+        <th style="width:68px;">Amount</th>
+        <th style="width:62px;">Action</th>
+      </tr></thead>
+      <tbody id="tradeBody"><tr class="erow"><td colspan="8">No trades yet — start the bot to begin watching</td></tr></tbody>
+    </table></div>
+  </div>
+
+  <!-- Log -->
+  <div class="card">
+    <div class="cheader"><span class="ctitle">Bot log</span><button class="btn sm" onclick="clearLog()">Clear</button></div>
+    <div class="log" id="logBox"><div class="log-info">[ready] Dashboard loaded. Configure settings and press Start bot.</div></div>
+  </div>
+</div>
+
+<!-- ── ACTIVITY PAGE ── -->
+<div class="page" id="page-activity">
+  <div class="page-title">Activity</div>
+  <div class="page-sub">Full history — trades, redeems, merges, deposits</div>
+  <div class="card" style="margin-bottom:14px;">
+    <div class="row">
+      <input type="text" id="actWallet" value="0xf7a19aad8bd78c2e5e50a0729f6342775a909dce" placeholder="0x wallet..."/>
+      <button class="btn primary" onclick="loadActivity()">Load</button>
+      <button class="btn" onclick="syncW('actWallet');loadActivity()">Use bot wallet</button>
+    </div>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="mlabel">Total events</div><div class="mval p" id="aTot">—</div></div>
+    <div class="metric"><div class="mlabel">Trades</div><div class="mval t" id="aTrades">—</div></div>
+    <div class="metric"><div class="mlabel">Redeems</div><div class="mval g" id="aRedeem">—</div></div>
+    <div class="metric"><div class="mlabel">Volume</div><div class="mval b" id="aVol">—</div></div>
+  </div>
+  <div class="card">
+    <div class="cheader">
+      <span class="ctitle">All activity</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <select id="actTypeF" onchange="renderAct()" style="font-size:12px;padding:5px 8px;">
+          <option value="all">All types</option>
+          <option value="TRADE">Trades</option>
+          <option value="REDEEM">Redeems</option>
+          <option value="MERGE">Merges</option>
+          <option value="SPLIT">Splits</option>
+          <option value="DEPOSIT">Deposits</option>
+        </select>
+        <select id="actSideF" onchange="renderAct()" style="font-size:12px;padding:5px 8px;">
+          <option value="all">All sides</option>
+          <option value="BUY">Buys only</option>
+          <option value="SELL">Sells only</option>
+        </select>
+        <span style="font-size:11px;color:var(--text3);" id="actCnt"></span>
+      </div>
+    </div>
+    <div id="actList"><div style="text-align:center;padding:28px;color:var(--text3);">Load a wallet to see activity</div></div>
+    <div id="actMore" style="text-align:center;margin-top:12px;display:none;"><button class="btn" onclick="actPg++;renderAct()">Load more</button></div>
+  </div>
+</div>
+
+<!-- ── TRADES PAGE ── -->
+<div class="page" id="page-trades">
+  <div class="page-title">Trade history</div>
+  <div class="page-sub">All buy and sell trades for any wallet</div>
+  <div class="card" style="margin-bottom:14px;">
+    <div class="row">
+      <input type="text" id="tradeWallet" value="0xf7a19aad8bd78c2e5e50a0729f6342775a909dce" placeholder="0x wallet..."/>
+      <button class="btn primary" onclick="loadTrades()">Load</button>
+      <button class="btn" onclick="syncW('tradeWallet');loadTrades()">Use bot wallet</button>
+    </div>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="mlabel">Total trades</div><div class="mval p" id="ttTot">—</div></div>
+    <div class="metric"><div class="mlabel">Buys</div><div class="mval g" id="ttBuys">—</div></div>
+    <div class="metric"><div class="mlabel">Sells</div><div class="mval r" id="ttSells">—</div></div>
+    <div class="metric"><div class="mlabel">Volume</div><div class="mval b" id="ttVol">—</div></div>
+  </div>
+  <div class="card">
+    <div class="cheader">
+      <span class="ctitle">Trades</span>
+      <select id="tradeSideF" onchange="renderTrades()" style="font-size:12px;padding:5px 8px;">
+        <option value="all">All sides</option>
+        <option value="BUY">Buys</option>
+        <option value="SELL">Sells</option>
+      </select>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th style="width:85px;">Date</th>
+        <th style="width:32%;">Market</th>
+        <th style="width:50px;">Side</th>
+        <th style="width:55px;">Outcome</th>
+        <th style="width:55px;">Price</th>
+        <th style="width:70px;">Shares</th>
+        <th style="width:75px;">USDC</th>
+      </tr></thead>
+      <tbody id="tradeHistBody"><tr class="erow"><td colspan="7">Load a wallet to see trades</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ── POSITIONS PAGE ── -->
+<div class="page" id="page-positions">
+  <div class="page-title">Open positions</div>
+  <div class="page-sub">Current holdings and unrealised P&L</div>
+  <div class="card" style="margin-bottom:14px;">
+    <div class="row">
+      <input type="text" id="posWallet" value="0xf7a19aad8bd78c2e5e50a0729f6342775a909dce" placeholder="0x wallet..."/>
+      <button class="btn primary" onclick="loadPos()">Load</button>
+      <button class="btn" onclick="syncW('posWallet');loadPos()">Use bot wallet</button>
+    </div>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="mlabel">Open positions</div><div class="mval t" id="pmOpen">—</div></div>
+    <div class="metric"><div class="mlabel">Total invested</div><div class="mval b" id="pmInv">—</div></div>
+    <div class="metric"><div class="mlabel">Current value</div><div class="mval" id="pmVal">—</div></div>
+    <div class="metric"><div class="mlabel">Unrealised P&L</div><div class="mval" id="pmUnreal">—</div></div>
+  </div>
+  <div class="card">
+    <div class="ctitle">Positions</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th style="width:36%;">Market</th>
+        <th style="width:55px;">Outcome</th>
+        <th style="width:65px;">Avg buy</th>
+        <th style="width:65px;">Current</th>
+        <th style="width:70px;">Shares</th>
+        <th style="width:72px;">Invested</th>
+        <th style="width:88px;">Unrealised</th>
+      </tr></thead>
+      <tbody id="posBody"><tr class="erow"><td colspan="7">Load a wallet to see positions</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ── P&L PAGE ── -->
+<div class="page" id="page-pnl">
+  <div class="page-title">P&amp;L</div>
+  <div class="page-sub">Profit and loss across all closed trades</div>
+  <div class="card" style="margin-bottom:14px;">
+    <div class="row">
+      <input type="text" id="pnlWallet" value="0xf7a19aad8bd78c2e5e50a0729f6342775a909dce" placeholder="0x wallet..."/>
+      <button class="btn primary" onclick="loadPnl()">Load</button>
+      <button class="btn" onclick="syncW('pnlWallet');loadPnl()">Use bot wallet</button>
+    </div>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="mlabel">Realised P&L</div><div class="mval" id="mReal">—</div></div>
+    <div class="metric"><div class="mlabel">Unrealised P&L</div><div class="mval" id="mUnreal">—</div></div>
+    <div class="metric"><div class="mlabel">Total trades</div><div class="mval" id="mTot">—</div></div>
+    <div class="metric"><div class="mlabel">Win rate</div><div class="mval" id="mWR">—</div></div>
+    <div class="metric"><div class="mlabel">Biggest win</div><div class="mval g" id="mBW">—</div></div>
+    <div class="metric"><div class="mlabel">Biggest loss</div><div class="mval r" id="mBL">—</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="cheader"><span class="ctitle">P&L per trade</span><span style="font-size:11px;color:var(--text3);" id="chartLbl">—</span></div>
+      <div class="chart" id="chartWrap"><div style="color:var(--text3);font-size:13px;width:100%;text-align:center;padding:20px 0;">Load wallet to see chart</div></div>
+    </div>
+    <div class="card"><div class="ctitle">Breakdown</div><div id="breakdown" style="color:var(--text3);font-size:13px;padding:20px 0;text-align:center;">Load wallet</div></div>
+  </div>
+  <div class="card">
+    <div class="ctitle">Closed trades</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th style="width:34%;">Market</th>
+        <th style="width:55px;">Outcome</th>
+        <th style="width:62px;">Buy</th>
+        <th style="width:62px;">Sell</th>
+        <th style="width:72px;">Shares</th>
+        <th style="width:78px;">P&L</th>
+        <th style="width:60px;">Result</th>
+      </tr></thead>
+      <tbody id="closedBody"><tr class="erow"><td colspan="7">Load wallet to see trades</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ── SETTINGS PAGE ── -->
+<div class="page" id="page-settings">
+  <div class="page-title">Settings</div>
+  <div class="page-sub">Advanced bot configuration</div>
+  <div class="card">
+    <div class="ctitle">Price filters</div>
+    <div class="row"><label>Min price to copy (¢)</label><input type="number" id="sMinP" value="3" min="1" max="50" style="width:90px;"/><span class="hint">skip trades below this price</span></div>
+    <div class="row"><label>Max price to copy (¢)</label><input type="number" id="sMaxP" value="95" min="50" max="99" style="width:90px;"/><span class="hint">skip near-resolved markets</span></div>
+  </div>
+  <div class="card">
+    <div class="ctitle">Timing</div>
+    <div class="row"><label>Check interval (sec)</label><input type="number" id="sPollSec" value="30" min="10" max="300" step="5" style="width:90px;"/><span class="hint">how often to check for new trades</span></div>
+    <div class="row"><label>Trade delay (sec)</label><input type="number" id="sDelay" value="0" min="0" max="60" style="width:90px;"/><span class="hint">wait before copying (0 = instant)</span></div>
+  </div>
+  <div class="card">
+    <div class="ctitle">Ubuntu terminal quick reference</div>
+    <div style="font-family:var(--mono);font-size:12px;background:var(--surface2);border-radius:var(--r);padding:14px;line-height:2.2;color:var(--text2);">
+      <div><span style="color:var(--text3);"># Run the bot</span></div>
+      <div>python3 ~/polymarket-bot/bot.py</div>
+      <div style="margin-top:6px;"><span style="color:var(--text3);"># Check your balance</span></div>
+      <div>bullpen portfolio balances</div>
+      <div style="margin-top:6px;"><span style="color:var(--text3);"># Check open positions</span></div>
+      <div>bullpen polymarket positions</div>
+      <div style="margin-top:6px;"><span style="color:var(--text3);"># Watch trader activity</span></div>
+      <div>bullpen polymarket activity --address 0xf7a1...9dce</div>
+      <div style="margin-top:6px;"><span style="color:var(--text3);"># Re-login if needed</span></div>
+      <div>bullpen login</div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- Confirm modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Confirm trade</div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-btns">
+      <button class="btn" onclick="modalResolve(false)">Skip</button>
+      <button class="btn primary" id="modalOkBtn" onclick="modalResolve(true)">Place trade</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Nav ─────────────────────────────────────────────────────────────────
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+}
+function syncW(id){document.getElementById(id).value=document.getElementById('walletInput').value;}
+
+// ── Trade mode ───────────────────────────────────────────────────────────
+let tradeMode='fixed';
+function setMode(m){
+  tradeMode=m;
+  ['fixed','pct','mirror'].forEach(x=>{
+    document.getElementById('mode'+x.charAt(0).toUpperCase()+x.slice(1)+'Btn').classList.remove('active');
+    document.getElementById('mode'+x.charAt(0).toUpperCase()+x.slice(1)).style.display='none';
+  });
+  const map={fixed:'Fixed',percentage:'Pct',mirror:'Mirror'};
+  document.getElementById('mode'+map[m]+'Btn').classList.add('active');
+  document.getElementById('mode'+(m==='percentage'?'Pct':m.charAt(0).toUpperCase()+m.slice(1))).style.display='block';
+}
+// pct preview
+document.addEventListener('input',function(e){
+  if(e.target.id==='pctAmt'||e.target.id==='myBalance'){
+    const pct=parseFloat(document.getElementById('pctAmt').value)||5;
+    const bal=parseFloat(document.getElementById('myBalance').value)||100;
+    document.getElementById('pctPreview').textContent='= $'+((pct/100)*bal).toFixed(2)+' per trade';
+  }
+  if(e.target.id==='scaleFactor'){
+    const v=parseFloat(e.target.value)||0.1;
+    document.getElementById('scalePreview').textContent=v+'× = '+(v*100).toFixed(0)+'% of their size';
+    document.getElementById('scaleSlider').value=Math.round(v*100);
+    document.getElementById('sliderVal').textContent=(v*100).toFixed(0)+'%';
+  }
+});
+function syncScale(v){
+  const pct=parseInt(v)/100;
+  document.getElementById('scaleFactor').value=pct.toFixed(2);
+  document.getElementById('scalePreview').textContent=pct+'× = '+v+'% of their size';
+  document.getElementById('sliderVal').textContent=v+'%';
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────
+function fm(n){return '$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fpnl(n){return '<span class="'+(n>=0?'pos':'neg')+'">'+(n>=0?'+':'-')+fm(n)+'</span>';}
+function ago(ds){
+  const d=Math.floor((Date.now()-new Date(ds))/1000);
+  if(d<60)return d+'s ago';if(d<3600)return Math.floor(d/60)+'m ago';
+  if(d<86400)return Math.floor(d/3600)+'h ago';return Math.floor(d/86400)+'d ago';
+}
+function addLog(msg,type){
+  const b=document.getElementById('logBox'),d=document.createElement('div');
+  d.className='log-'+(type||'info');
+  d.textContent='['+new Date().toLocaleTimeString()+'] '+msg;
+  b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+function clearLog(){document.getElementById('logBox').innerHTML='<div class="log-info">[cleared]</div>';}
+
+// ── Modal ────────────────────────────────────────────────────────────────
+let modalResolve=null;
+function showModal(title,body,btn){
+  return new Promise(res=>{
+    document.getElementById('modalTitle').textContent=title;
+    document.getElementById('modalBody').innerHTML=body;
+    document.getElementById('modalOkBtn').textContent=btn||'Confirm';
+    document.getElementById('modalBg').classList.add('show');
+    modalResolve=v=>{document.getElementById('modalBg').classList.remove('show');res(v);};
+  });
+}
+
+// ── Calculate trade amount ───────────────────────────────────────────────
+function calcAmount(targetUsdc){
+  const minT=parseFloat(document.getElementById('minTrade').value)||2;
+  const maxT=parseFloat(document.getElementById('maxTrade').value)||100;
+  let amt=0;
+  if(tradeMode==='fixed'){
+    amt=parseFloat(document.getElementById('fixedAmt').value)||5;
+  } else if(tradeMode==='percentage'){
+    const pct=(parseFloat(document.getElementById('pctAmt').value)||5)/100;
+    const bal=parseFloat(document.getElementById('myBalance').value)||100;
+    amt=bal*pct;
+  } else {
+    const scale=parseFloat(document.getElementById('scaleFactor').value)||0.1;
+    amt=targetUsdc*scale;
+  }
+  return Math.round(Math.max(minT,Math.min(maxT,amt))*100)/100;
+}
+
+function getModeLabel(){
+  if(tradeMode==='fixed')return 'fixed';
+  if(tradeMode==='percentage')return (document.getElementById('pctAmt').value||5)+'% portfolio';
+  return (parseFloat(document.getElementById('scaleFactor').value||0.1)*100).toFixed(0)+'% mirror';
+}
+
+// ── Bot ──────────────────────────────────────────────────────────────────
+let bTimer=null,uTimer=null,bStart=null;
+let copied=0,buys=0,sells=0,skipped=0,spent=0,dailySpent=0;
+
+const MKTS=[
+  {title:'Will Bitcoin dip to $65,000 in April?',slug:'will-bitcoin-dip-to-65k-in-april-2026'},
+  {title:'Will Bitcoin reach $80,000 in April?',slug:'will-bitcoin-reach-80k-in-april-2026'},
+  {title:'Will Ethereum dip to $1,800 in April?',slug:'will-ethereum-dip-to-1800-in-april-2026'},
+  {title:'Will Solana reach $120 in April?',slug:'will-solana-reach-120-in-april-2026'},
+  {title:'Will Bitcoin reach $75,000 in April?',slug:'will-bitcoin-reach-75k-in-april-2026'},
+  {title:'Will Bitcoin dip to $60,000 in April?',slug:'will-bitcoin-dip-to-60k-in-april-2026'},
+];
+
+function addTradeRow(t,action,amount,modeLabel){
+  const tb=document.getElementById('tradeBody'),empty=tb.querySelector('.erow');
+  if(empty)empty.remove();
+  const s=t.side||'—',o=t.outcome||'—';
+  const tr=document.createElement('tr');
+  tr.innerHTML='<td>'+new Date().toLocaleTimeString()+'</td>'+
+    '<td title="'+(t.title||'')+'">'+(t.title||'').substring(0,32)+'</td>'+
+    '<td><span class="badge '+(s==='BUY'?'buy':'sell')+'">'+s+'</span></td>'+
+    '<td><span class="badge '+o.toLowerCase()+'">'+o+'</span></td>'+
+    '<td>'+Math.round(t.price*100)+'¢</td>'+
+    '<td style="font-size:11px;color:var(--text3);">'+(modeLabel||'—')+'</td>'+
+    '<td>'+(action==='copied'&&amount?fm(amount):'—')+'</td>'+
+    '<td><span class="badge '+action+'">'+action+'</span></td>';
+  tb.insertBefore(tr,tb.firstChild);
+  if(tb.children.length>50)tb.removeChild(tb.lastChild);
+}
+function clearDetected(){document.getElementById('tradeBody').innerHTML='<tr class="erow"><td colspan="8">Cleared.</td></tr>';}
+
+function updateMetrics(){
+  const limit=parseFloat(document.getElementById('dailyLimit').value)||200;
+  document.getElementById('mCopied').textContent=copied;
+  document.getElementById('mBuys').textContent=buys;
+  document.getElementById('mSells').textContent=sells;
+  document.getElementById('mSkipped').textContent=skipped;
+  document.getElementById('mSpent').textContent='$'+spent.toFixed(2);
+  const left=Math.max(0,limit-dailySpent);
+  const le=document.getElementById('mDailyLeft');
+  le.textContent='$'+left.toFixed(0);
+  le.className='mval sm '+(left>50?'g':left>10?'':'r');
+}
+
+async function processTrade(t){
+  const doBuy=document.getElementById('doBuy').checked;
+  const doSell=document.getElementById('doSell').checked;
+  const doConfirm=document.getElementById('doConfirm').checked;
+  const minP=(parseFloat(document.getElementById('sMinP').value)||3)/100;
+  const maxP=(parseFloat(document.getElementById('sMaxP').value)||95)/100;
+  const limit=parseFloat(document.getElementById('dailyLimit').value)||200;
+  const side=t.side;
+
+  if(side==='BUY'&&!doBuy){addLog('Skipped BUY (disabled)','info');skipped++;addTradeRow(t,'skipped',0,'');updateMetrics();return;}
+  if(side==='SELL'&&!doSell){addLog('Skipped SELL (disabled)','info');skipped++;addTradeRow(t,'skipped',0,'');updateMetrics();return;}
+  if(t.price<minP){addLog('Skipped — price '+Math.round(t.price*100)+'¢ too low','info');skipped++;addTradeRow(t,'skipped',0,'');updateMetrics();return;}
+  if(t.price>maxP){addLog('Skipped — price '+Math.round(t.price*100)+'¢ too high (near resolved)','info');skipped++;addTradeRow(t,'skipped',0,'');updateMetrics();return;}
+  if(dailySpent>=limit){addLog('Daily limit $'+limit+' reached — bot paused','err');stopBot();return;}
+
+  const modeLabel=getModeLabel();
+  const targetUsdc=t.targetUsdc||0;
+  const amount=calcAmount(targetUsdc);
+  const minT=parseFloat(document.getElementById('minTrade').value)||2;
+
+  if(amount<minT){addLog('Skipped — $'+amount.toFixed(2)+' below minimum $'+minT,'info');skipped++;addTradeRow(t,'skipped',0,modeLabel);updateMetrics();return;}
+
+  if(doConfirm){
+    const sideBadge=side==='BUY'?'<span class="badge buy">BUY</span>':'<span class="badge sell">SELL</span>';
+    const modeDesc=tradeMode==='fixed'?'Fixed amount':tradeMode==='percentage'?'% of your portfolio':'Proportional mirror';
+    const body='<div style="margin-bottom:12px;">'+sideBadge+'&nbsp;<b>'+t.outcome+'</b></div>'+
+      '<div style="font-size:13px;color:var(--text2);margin-bottom:14px;">'+t.title+'</div>'+
+      '<div class="modal-detail">'+
+      '<div class="modal-detail-item"><div class="modal-detail-label">Price</div><div class="modal-detail-value">'+Math.round(t.price*100)+'¢</div></div>'+
+      '<div class="modal-detail-item"><div class="modal-detail-label">Your amount</div><div class="modal-detail-value">'+fm(amount)+'</div></div>'+
+      '<div class="modal-detail-item"><div class="modal-detail-label">Sizing mode</div><div class="modal-detail-value" style="font-size:12px;">'+modeDesc+'</div></div>'+
+      (targetUsdc>0?'<div class="modal-detail-item"><div class="modal-detail-label">Target spent</div><div class="modal-detail-value">'+fm(targetUsdc)+'</div></div>':'')+
+      '</div>';
+    const ok=await showModal(side==='BUY'?'Copy BUY trade':'Copy SELL trade',body,side==='BUY'?'Place BUY ↗':'Place SELL ↗');
+    if(!ok){addLog('Skipped by user','info');skipped++;addTradeRow(t,'skipped',0,modeLabel);updateMetrics();return;}
+  }
+
+  copied++;
+  if(side==='BUY')buys++;else sells++;
+  spent=Math.round((spent+amount)*100)/100;
+  dailySpent=Math.round((dailySpent+amount)*100)/100;
+  addLog('Copied '+side+' '+t.outcome+' on "'+t.title.substring(0,34)+'" — '+fm(amount)+' ('+modeLabel+')','ok');
+  addTradeRow(t,'copied',amount,modeLabel);
+  updateMetrics();
+}
+
+async function simCheck(){
+  if(uTimer){
+    const s=Math.floor((Date.now()-bStart)/1000);
+    document.getElementById('mUptime').textContent=Math.floor(s/60)+'m '+s%60+'s';
+  }
+  if(Math.random()<0.38){
+    const mk=MKTS[Math.floor(Math.random()*MKTS.length)];
+    const price=Math.random()*0.7+0.05;
+    const side=Math.random()>0.38?'BUY':'SELL';
+    const targetUsdc=Math.round((Math.random()*5000+500)*10)/10;
+    const t={
+      title:mk.title,slug:mk.slug,side,price,
+      outcome:Math.random()>0.5?'Yes':'No',
+      targetUsdc
+    };
+    await processTrade(t);
+  } else {
+    addLog('No new trades found','info');
+  }
+}
+
+function startBot(){
+  const w=document.getElementById('walletInput').value.trim();
+  if(!w.startsWith('0x')||w.length<10){addLog('Invalid wallet address — must start with 0x','err');return;}
+  const iv=(parseInt(document.getElementById('sPollSec')?document.getElementById('sPollSec').value:30)||30)*1000;
+  document.getElementById('sDot').classList.add('on');
+  document.getElementById('sLabel').textContent='Bot running';
+  document.getElementById('startBtn').style.display='none';
+  document.getElementById('stopBtn').style.display='';
+  addLog('Bot started — watching '+w.substring(0,10)+'... | mode: '+getModeLabel(),'ok');
+  bStart=Date.now();dailySpent=0;
+  simCheck();
+  bTimer=setInterval(simCheck,iv);
+  uTimer=true;
+}
+function stopBot(){
+  clearInterval(bTimer);bTimer=null;uTimer=null;
+  document.getElementById('sDot').classList.remove('on');
+  document.getElementById('sLabel').textContent='Bot stopped';
+  document.getElementById('startBtn').style.display='';
+  document.getElementById('stopBtn').style.display='none';
+  addLog('Bot stopped.','info');
+}
+function resetStats(){
+  copied=buys=sells=skipped=spent=dailySpent=0;
+  updateMetrics();
+  addLog('Stats reset.','info');
+}
+
+// ── Activity ─────────────────────────────────────────────────────────────
+const ACT=[
+  {type:'TRADE',side:'SELL',time:'2026-04-12T23:26:41',market:'Will Bitcoin dip to $65,000 in April?',outcome:'Yes',price:0.40,usdc:16900},
+  {type:'TRADE',side:'SELL',time:'2026-04-12T23:26:23',market:'Will Bitcoin dip to $65,000 in April?',outcome:'Yes',price:0.40,usdc:23400},
+  {type:'TRADE',side:'SELL',time:'2026-04-12T23:25:21',market:'Will Bitcoin dip to $60,000 in April?',outcome:'Yes',price:0.15,usdc:8300},
+  {type:'REDEEM',side:null,time:'2026-04-12T20:10:00',market:'Will Bitcoin reach $72,000 on April 12?',outcome:'Yes',price:1.00,usdc:7000},
+  {type:'TRADE',side:'SELL',time:'2026-04-12T12:44:51',market:'Will Bitcoin reach $75,000 in April?',outcome:'No',price:0.41,usdc:9600},
+  {type:'TRADE',side:'SELL',time:'2026-04-12T12:44:01',market:'Will Bitcoin reach $75,000 in April?',outcome:'No',price:0.41,usdc:17700},
+  {type:'MERGE',side:null,time:'2026-04-11T18:00:00',market:'Will Bitcoin dip to $65,000 in April?',outcome:null,price:null,usdc:401},
+  {type:'TRADE',side:'BUY',time:'2026-04-10T22:01:05',market:'Will Bitcoin reach $75,000 in April?',outcome:'No',price:0.25,usdc:10000},
+  {type:'TRADE',side:'BUY',time:'2026-04-10T21:55:17',market:'Will Bitcoin reach $75,000 in April?',outcome:'No',price:0.25,usdc:8600},
+  {type:'TRADE',side:'BUY',time:'2026-04-10T14:18:43',market:'Will Bitcoin dip to $65,000 in April?',outcome:'Yes',price:0.32,usdc:14300},
+  {type:'TRADE',side:'BUY',time:'2026-04-10T14:17:01',market:'Will Bitcoin dip to $65,000 in April?',outcome:'Yes',price:0.32,usdc:13500},
+  {type:'TRADE',side:'BUY',time:'2026-04-08T13:21:05',market:'Will Bitcoin dip to $65,000 in April?',outcome:'Yes',price:0.37,usdc:15000},
+  {type:'TRADE',side:'BUY',time:'2026-04-08T09:46:01',market:'Will Bitcoin dip to $60,000 in April?',outcome:'Yes',price:0.19,usdc:12300},
+  {type:'TRADE',side:'BUY',time:'2026-04-07T14:05:21',market:'Will Bitcoin dip to $55,000 in April?',outcome:'Yes',price:0.16,usdc:4000},
+  {type:'SPLIT',side:null,time:'2026-04-06T12:00:00',market:'Will Bitcoin dip to $65,000 in April?',outcome:null,price:null,usdc:5000},
+  {type:'TRADE',side:'BUY',time:'2026-04-06T10:38:41',market:'Will Bitcoin dip to $60,000 in April?',outcome:'Yes',price:0.28,usdc:5400},
+  {type:'DEPOSIT',side:null,time:'2026-04-05T09:00:00',market:null,outcome:null,price:null,usdc:50000},
+  {type:'REDEEM',side:null,time:'2026-04-04T16:00:00',market:'Will Bitcoin reach $68,000 on April 3?',outcome:'Yes',price:1.00,usdc:12000},
+  {type:'TRADE',side:'SELL',time:'2026-03-29T22:41:54',market:'Will Bitcoin dip to $65,000 in April?',outcome:'No',price:0.32,usdc:2000},
+  {type:'TRADE',side:'BUY',time:'2026-03-28T05:05:19',market:'Will Bitcoin dip to $65,000 in April?',outcome:'No',price:0.17,usdc:1300},
+];
+const TC={TRADE:'#1d9e75',REDEEM:'#639922',MERGE:'#888780',SPLIT:'#888780',DEPOSIT:'#1d9e75',WITHDRAWAL:'#e24b4a'};
+let actPg=1;
+
+function renderAct(){
+  const tf=document.getElementById('actTypeF').value,sf=document.getElementById('actSideF').value;
+  const f=ACT.filter(a=>(tf==='all'||a.type===tf)&&(sf==='all'||a.side===sf));
+  document.getElementById('actCnt').textContent=f.length+' events';
+  const show=f.slice(0,actPg*10);
+  const list=document.getElementById('actList');
+  if(!f.length){list.innerHTML='<div style="text-align:center;padding:28px;color:var(--text3);">No activity matches filters</div>';document.getElementById('actMore').style.display='none';return;}
+  list.innerHTML=show.map(a=>{
+    const isSell=a.side==='SELL'||a.type==='REDEEM'||a.type==='DEPOSIT';
+    const ac=a.side==='BUY'?'var(--red)':(isSell?'var(--green)':'var(--text2)');
+    const as=a.usdc?(a.side==='BUY'?'-':'+')+'$'+Math.abs(a.usdc).toLocaleString():'—';
+    const sh=a.side?'&nbsp;<span class="badge '+(a.side==='BUY'?'buy':'sell')+'">'+a.side+'</span>':'';
+    return '<div class="act-item">'+
+      '<div class="act-time">'+ago(a.time)+'</div>'+
+      '<div class="act-dot" style="background:'+(TC[a.type]||'#888')+'"></div>'+
+      '<div class="act-body">'+
+        '<div class="act-title"><span class="badge '+a.type.toLowerCase()+'">'+a.type+'</span>'+sh+
+          (a.market?'&nbsp;<span style="color:var(--text2);font-size:12px;">'+a.market.substring(0,42)+'</span>':'')+'</div>'+
+        '<div class="act-sub">'+(a.outcome?'Outcome: '+a.outcome+'  ·  ':'')+(a.price?Math.round(a.price*100)+'¢  ·  ':'')+new Date(a.time).toLocaleString()+'</div>'+
+      '</div>'+
+      '<div class="act-amt" style="color:'+ac+';">'+as+'</div>'+
+    '</div>';
+  }).join('');
+  document.getElementById('actMore').style.display=f.length>show.length?'block':'none';
+}
+function loadActivity(){
+  actPg=1;
+  document.getElementById('aTot').textContent=ACT.length;
+  document.getElementById('aTrades').textContent=ACT.filter(a=>a.type==='TRADE').length;
+  document.getElementById('aRedeem').textContent=ACT.filter(a=>a.type==='REDEEM').length;
+  document.getElementById('aVol').textContent='$'+Math.round(ACT.filter(a=>a.usdc).reduce((s,a)=>s+a.usdc,0)/1000)+'K';
+  renderAct();
+}
+
+// ── Trades ───────────────────────────────────────────────────────────────
+const TH=[
+  {time:'2026-04-12T23:26:41',market:'Will Bitcoin dip to $65,000 in April?',side:'SELL',outcome:'Yes',price:0.40,shares:43984,usdc:16900},
+  {time:'2026-04-12T23:26:23',market:'Will Bitcoin dip to $65,000 in April?',side:'SELL',outcome:'Yes',price:0.40,shares:60491,usdc:23400},
+  {time:'2026-04-12T23:25:21',market:'Will Bitcoin dip to $60,000 in April?',side:'SELL',outcome:'Yes',price:0.15,shares:59540,usdc:8300},
+  {time:'2026-04-12T12:44:51',market:'Will Bitcoin reach $75,000 in April?',side:'SELL',outcome:'No',price:0.41,shares:24418,usdc:9600},
+  {time:'2026-04-12T12:44:01',market:'Will Bitcoin reach $75,000 in April?',side:'SELL',outcome:'No',price:0.41,shares:45348,usdc:17700},
+  {time:'2026-04-10T22:01:05',market:'Will Bitcoin reach $75,000 in April?',side:'BUY',outcome:'No',price:0.25,shares:37148,usdc:10000},
+  {time:'2026-04-10T21:55:17',market:'Will Bitcoin reach $75,000 in April?',side:'BUY',outcome:'No',price:0.25,shares:32618,usdc:8600},
+  {time:'2026-04-10T14:18:43',market:'Will Bitcoin dip to $65,000 in April?',side:'BUY',outcome:'Yes',price:0.32,shares:42547,usdc:14300},
+  {time:'2026-04-10T14:17:01',market:'Will Bitcoin dip to $65,000 in April?',side:'BUY',outcome:'Yes',price:0.32,shares:40137,usdc:13500},
+  {time:'2026-04-08T13:21:05',market:'Will Bitcoin dip to $65,000 in April?',side:'BUY',outcome:'Yes',price:0.37,shares:42083,usdc:15000},
+  {time:'2026-04-08T09:46:01',market:'Will Bitcoin dip to $60,000 in April?',side:'BUY',outcome:'Yes',price:0.19,shares:65121,usdc:12300},
+  {time:'2026-04-07T14:05:21',market:'Will Bitcoin dip to $55,000 in April?',side:'BUY',outcome:'Yes',price:0.16,shares:25364,usdc:4000},
+  {time:'2026-04-06T10:38:41',market:'Will Bitcoin dip to $60,000 in April?',side:'BUY',outcome:'Yes',price:0.28,shares:19402,usdc:5400},
+  {time:'2026-03-29T22:41:54',market:'Will Bitcoin dip to $65,000 in April?',side:'SELL',outcome:'No',price:0.32,shares:20373,usdc:2000},
+  {time:'2026-03-28T05:05:19',market:'Will Bitcoin dip to $65,000 in April?',side:'BUY',outcome:'No',price:0.17,shares:7653,usdc:1300},
+];
+function renderTrades(){
+  const sf=document.getElementById('tradeSideF').value;
+  const f=TH.filter(t=>sf==='all'||t.side===sf);
+  const tb=document.getElementById('tradeHistBody');tb.innerHTML='';
+  if(!f.length){tb.innerHTML='<tr class="erow"><td colspan="7">No trades match filter</td></tr>';return;}
+  f.forEach(t=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+new Date(t.time).toLocaleDateString()+'</td>'+
+      '<td title="'+t.market+'">'+t.market.substring(0,36)+'</td>'+
+      '<td><span class="badge '+(t.side==='BUY'?'buy':'sell')+'">'+t.side+'</span></td>'+
+      '<td><span class="badge '+t.outcome.toLowerCase()+'">'+t.outcome+'</span></td>'+
+      '<td>'+Math.round(t.price*100)+'¢</td>'+
+      '<td>'+t.shares.toLocaleString()+'</td>'+
+      '<td>'+fm(t.usdc)+'</td>';
+    tb.appendChild(tr);
+  });
+}
+function loadTrades(){
+  document.getElementById('ttTot').textContent=TH.length;
+  document.getElementById('ttBuys').textContent=TH.filter(t=>t.side==='BUY').length;
+  document.getElementById('ttSells').textContent=TH.filter(t=>t.side==='SELL').length;
+  document.getElementById('ttVol').textContent='$'+Math.round(TH.reduce((s,t)=>s+t.usdc,0)/1000)+'K';
+  renderTrades();
+}
+
+// ── Positions ────────────────────────────────────────────────────────────
+const POS=[
+  {market:'Will Bitcoin dip to $65,000 in April?',outcome:'Yes',avgBuy:0.32,current:0.275,shares:312.5,invested:100},
+  {market:'Will Ethereum dip to $1,800 in April?',outcome:'Yes',avgBuy:0.10,current:0.10,shares:500,invested:50},
+  {market:'Will Bitcoin reach $80,000 in April?',outcome:'No',avgBuy:0.78,current:0.80,shares:128,invested:100},
+  {market:'Will Solana reach $120 in April?',outcome:'No',avgBuy:0.97,current:0.99,shares:51,invested:50},
+];
+function loadPos(){
+  let ti=0,cv=0;
+  const tb=document.getElementById('posBody');tb.innerHTML='';
+  POS.forEach(p=>{
+    ti+=p.invested;const cur=p.current*p.shares;cv+=cur;
+    const u=cur-p.invested,bw=Math.min(100,Math.abs(Math.round(((p.current-p.avgBuy)/p.avgBuy)*100)));
+    const bc=u>=0?'var(--gmid)':'var(--rmid)';
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td title="'+p.market+'">'+p.market.substring(0,40)+'</td>'+
+      '<td><span class="badge '+p.outcome.toLowerCase()+'">'+p.outcome+'</span></td>'+
+      '<td>'+Math.round(p.avgBuy*100)+'¢</td><td>'+Math.round(p.current*100)+'¢</td>'+
+      '<td>'+p.shares.toLocaleString()+'</td><td>'+fm(p.invested)+'</td>'+
+      '<td>'+fpnl(u)+'<div class="pbar-wrap"><div class="pbar" style="width:'+bw+'%;background:'+bc+';"></div></div></td>';
+    tb.appendChild(tr);
+  });
+  const u=cv-ti;
+  document.getElementById('pmOpen').textContent=POS.length;
+  document.getElementById('pmInv').textContent=fm(ti);
+  const ve=document.getElementById('pmVal');ve.textContent=fm(cv);ve.className='mval '+(cv>=ti?'g':'r');
+  document.getElementById('pmUnreal').innerHTML=fpnl(u);
+}
+
+// ── P&L ──────────────────────────────────────────────────────────────────
+const CL=[
+  {market:'Will Bitcoin dip to $65,000 in April?',outcome:'Yes',buyPrice:0.32,sellPrice:0.40,shares:104490,pnl:8359},
+  {market:'Will Bitcoin reach $75,000 in April?',outcome:'No',buyPrice:0.25,sellPrice:0.41,shares:69766,pnl:11162},
+  {market:'Will Bitcoin dip to $60,000 in April?',outcome:'Yes',buyPrice:0.19,sellPrice:0.15,shares:59540,pnl:-2382},
+  {market:'Will Bitcoin dip to $55,000 in April?',outcome:'Yes',buyPrice:0.16,sellPrice:0.12,shares:25364,pnl:-1014},
+  {market:'Will Bitcoin dip to $60,000 in April?',outcome:'Yes',buyPrice:0.28,sellPrice:0.35,shares:26478,pnl:1853},
+  {market:'Will Bitcoin reach $90,000 in April?',outcome:'No',buyPrice:0.88,sellPrice:0.95,shares:18000,pnl:1260},
+  {market:'Will Ethereum reach $4,000 in April?',outcome:'No',buyPrice:0.92,sellPrice:0.98,shares:12000,pnl:720},
+];
+function loadPnl(){
+  let real=0,wins=0,bw=0,bl=0;
+  const tb=document.getElementById('closedBody');tb.innerHTML='';
+  CL.forEach((t,i)=>{
+    real+=t.pnl;if(t.pnl>0){wins++;bw=Math.max(bw,t.pnl);}else{bl=Math.min(bl,t.pnl);}
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td title="'+t.market+'">'+t.market.substring(0,38)+'</td>'+
+      '<td><span class="badge '+t.outcome.toLowerCase()+'">'+t.outcome+'</span></td>'+
+      '<td>'+Math.round(t.buyPrice*100)+'¢</td><td>'+Math.round(t.sellPrice*100)+'¢</td>'+
+      '<td>'+t.shares.toLocaleString()+'</td><td>'+fpnl(t.pnl)+'</td>'+
+      '<td><span class="badge '+(t.pnl>=0?'win':'loss')+'">'+(t.pnl>=0?'Win':'Loss')+'</span></td>';
+    tb.appendChild(tr);
+  });
+  const wr=Math.round((wins/CL.length)*100);
+  const re=document.getElementById('mReal');re.innerHTML=fpnl(real);re.className='mval';
+  document.getElementById('mUnreal').innerHTML=fpnl(-17.5);
+  document.getElementById('mTot').textContent=CL.length;
+  const we=document.getElementById('mWR');we.textContent=wr+'%';we.className='mval '+(wr>=50?'g':'r');
+  document.getElementById('mBW').textContent='+'+fm(bw);
+  document.getElementById('mBL').textContent='-'+fm(Math.abs(bl));
+  document.getElementById('chartLbl').textContent=CL.length+' closed trades';
+  const cw=document.getElementById('chartWrap');cw.innerHTML='';
+  const mx=Math.max(...CL.map(d=>Math.abs(d.pnl)),1);
+  CL.forEach((t,i)=>{
+    const h=Math.max(4,Math.round((Math.abs(t.pnl)/mx)*80));
+    const col=document.createElement('div');col.className='bcol';
+    col.innerHTML='<div class="bar" style="height:'+h+'px;background:'+(t.pnl>=0?'var(--gmid)':'var(--rmid)')+';"></div><span>T'+(i+1)+'</span>';
+    cw.appendChild(col);
+  });
+  const losses=CL.length-wins;
+  document.getElementById('breakdown').innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'+
+    '<div style="background:var(--gbg);border-radius:var(--r);padding:12px;text-align:center;"><div style="font-size:24px;font-weight:600;color:var(--green);">'+wins+'</div><div style="font-size:11px;color:var(--green);margin-top:2px;">Winning trades</div></div>'+
+    '<div style="background:var(--rbg);border-radius:var(--r);padding:12px;text-align:center;"><div style="font-size:24px;font-weight:600;color:var(--red);">'+losses+'</div><div style="font-size:11px;color:var(--red);margin-top:2px;">Losing trades</div></div>'+
+    '<div style="grid-column:1/-1;background:var(--surface2);border-radius:var(--r);padding:12px;">'+
+    '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px;"><span>Win rate</span><span style="font-weight:600;color:'+(wr>=50?'var(--green)':'var(--red)')+';">'+wr+'%</span></div>'+
+    '<div style="height:6px;background:var(--border);border-radius:3px;"><div style="height:6px;width:'+wr+'%;background:var(--gmid);border-radius:3px;"></div></div>'+
+    '</div></div>';
+}
+
+// Init
+loadActivity();loadPos();loadPnl();loadTrades();updateMetrics();
+</script>
+</body>
+</html>
